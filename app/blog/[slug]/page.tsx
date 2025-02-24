@@ -57,7 +57,7 @@ export default async function BlogPostPage({ params }: Props) {
         {/* Cover Image */}
         <div className="absolute inset-0">
           <Image
-            src={post.coverImage}
+            src={post.coverImage || '/images/placeholder.jpg'}
             alt={post.title}
             fill
             className="object-cover"

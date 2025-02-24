@@ -41,6 +41,16 @@ import { Badge } from "@/components/ui/badge"
 
 const AUTOSAVE_INTERVAL = 30000 // 30 seconds
 
+interface BlogFormData {
+  title: string
+  excerpt: string
+  content: string
+  author: string
+  tags: string
+  coverImage: string
+  status: 'draft' | 'published'
+}
+
 interface FormErrors {
   title?: string
   excerpt?: string
@@ -57,9 +67,8 @@ export default function NewBlogPost() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
   const [errors, setErrors] = useState<FormErrors>({})
   const [previewMode, setPreviewMode] = useState(false)
-  const [previewInNewTab, setPreviewInNewTab] = useState(false)
   const previewRef = useRef<HTMLDivElement>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<BlogFormData>({
     title: '',
     excerpt: '',
     content: '',
@@ -84,70 +93,72 @@ export default function NewBlogPost() {
         console.error('Error loading draft:', error)
       }
     }
-  }, [])
+  }, [toast])
 
   // Autosave to localStorage
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (formData.title || formData.content) {
-        localStorage.setItem('blogDraft', JSON.stringify(formData))
-        setLastSaved(new Date())
-        setIsSaving(false)
-        
-        // Show toast notification for autosave
-        toast({
-          title: "Draft Saved",
-          description: "Your draft has been automatically saved.",
-          duration: 2000,
-        })
-      }
-    }, AUTOSAVE_INTERVAL)
+  const handleAutosave = useCallback(() => {
+    if (formData.title || formData.content) {
+      localStorage.setItem('blogDraft', JSON.stringify(formData))
+      setLastSaved(new Date())
+      setIsSaving(false)
+      
+      // Show toast notification for autosave
+      toast({
+        title: "Draft Saved",
+        description: "Your draft has been automatically saved.",
+        duration: 2000,
+      })
+    }
+  }, [formData, toast])
 
+  useEffect(() => {
+    const interval = setInterval(handleAutosave, AUTOSAVE_INTERVAL)
     return () => clearInterval(interval)
-  }, [formData])
+  }, [handleAutosave])
 
   // Real-time validation
+  const validateFields = useCallback(() => {
+    const newErrors: FormErrors = {}
+    
+    // Only validate fields that have been touched
+    if (formData.title) {
+      if (formData.title.trim().length === 0) {
+        newErrors.title = 'Title is required'
+      } else if (formData.title.trim().length < 5) {
+        newErrors.title = 'Title is too short'
+      }
+    }
+
+    if (formData.excerpt) {
+      if (formData.excerpt.trim().length === 0) {
+        newErrors.excerpt = 'Excerpt is required'
+      } else if (formData.excerpt.trim().length < 10) {
+        newErrors.excerpt = 'Excerpt is too short'
+      }
+    }
+
+    if (formData.content) {
+      if (formData.content.trim().length === 0) {
+        newErrors.content = 'Content is required'
+      } else if (formData.content.trim().length < 50) {
+        newErrors.content = 'Content is too short'
+      }
+    }
+
+    if (formData.author) {
+      if (formData.author.trim().length === 0) {
+        newErrors.author = 'Author is required'
+      }
+    }
+
+    setErrors(newErrors)
+  }, [formData])
+
   useEffect(() => {
     // Debounce validation to avoid excessive checks
-    const timer = setTimeout(() => {
-      const newErrors: FormErrors = {}
-      
-      // Only validate fields that have been touched
-      if (formData.title) {
-        if (formData.title.trim().length === 0) {
-          newErrors.title = 'Title is required'
-        } else if (formData.title.trim().length < 5) {
-          newErrors.title = 'Title is too short'
-        }
-      }
-      
-      if (formData.excerpt) {
-        if (formData.excerpt.trim().length === 0) {
-          newErrors.excerpt = 'Excerpt is required'
-        } else if (formData.excerpt.trim().length < 10) {
-          newErrors.excerpt = 'Excerpt is too short'
-        }
-      }
-      
-      if (formData.content) {
-        if (formData.content.trim().length === 0) {
-          newErrors.content = 'Content is required'
-        } else if (formData.content.trim().length < 50) {
-          newErrors.content = 'Content is too short'
-        }
-      }
-      
-      if (formData.author) {
-        if (formData.author.trim().length === 0) {
-          newErrors.author = 'Author is required'
-        }
-      }
-      
-      setErrors(newErrors)
-    }, 500)
-    
+    const timer = setTimeout(validateFields, 500)
     return () => clearTimeout(timer)
-  }, [formData])
+  }, [validateFields, toast])
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}

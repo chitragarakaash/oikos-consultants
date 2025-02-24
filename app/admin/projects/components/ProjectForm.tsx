@@ -20,21 +20,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Calendar } from '@/components/ui/calendar'
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover'
-import { format } from 'date-fns'
-import { Calendar as CalendarIcon, MapPin } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
-import dynamic from 'next/dynamic'
 import { Project } from '@/types/project'
-
-// Dynamically import the map component to avoid SSR issues
-const Map = dynamic(() => import('./Map'), { ssr: false })
+import { MapPin, Info } from 'lucide-react'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface ProjectFormProps {
   project?: Project
@@ -111,8 +105,35 @@ export default function ProjectForm({ project, isOpen, onClose }: ProjectFormPro
     }
   }
 
-  const handleLocationSelect = (coordinates: [number, number]) => {
-    setFormData((prev) => ({ ...prev, coordinates }))
+  const handleCoordinateChange = (type: 'lat' | 'lng', value: string) => {
+    const numValue = parseFloat(value)
+    
+    // Validate latitude (-90 to 90)
+    if (type === 'lat' && (isNaN(numValue) || numValue < -90 || numValue > 90)) {
+      toast({
+        title: "Invalid Latitude",
+        description: "Latitude must be between -90 and 90 degrees",
+        variant: "destructive"
+      })
+      return
+    }
+    
+    // Validate longitude (-180 to 180)
+    if (type === 'lng' && (isNaN(numValue) || numValue < -180 || numValue > 180)) {
+      toast({
+        title: "Invalid Longitude",
+        description: "Longitude must be between -180 and 180 degrees",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      coordinates: type === 'lat' 
+        ? [numValue || 0, prev.coordinates[1]]
+        : [prev.coordinates[0], numValue || 0]
+    }))
   }
 
   return (
@@ -250,56 +271,62 @@ export default function ProjectForm({ project, isOpen, onClose }: ProjectFormPro
               />
             </div>
 
-            {/* Location Map */}
+            {/* Location Coordinates */}
             <div className="col-span-2">
-              <Label className="mb-2 block">Location *</Label>
-              <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <Label>Location Coordinates *</Label>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Info className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>These coordinates will place a marker on the projects map.</p>
+                      <p>Latitude: -90 to 90 degrees</p>
+                      <p>Longitude: -180 to 180 degrees</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="latitude">Latitude</Label>
+                  <Label htmlFor="latitude" className="text-muted-foreground text-sm">Latitude</Label>
                   <Input
                     id="latitude"
                     type="number"
-                    step="any"
+                    step="0.000001"
+                    min="-90"
+                    max="90"
                     value={formData.coordinates[0]}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        coordinates: [parseFloat(e.target.value) || 0, prev.coordinates[1]],
-                      }))
-                    }
-                    placeholder="Enter latitude"
+                    onChange={(e) => handleCoordinateChange('lat', e.target.value)}
+                    placeholder="e.g., 15.3647"
+                    required
+                    className="font-mono"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current: {formData.coordinates[0].toFixed(6)}°N
+                  </p>
                 </div>
                 <div>
-                  <Label htmlFor="longitude">Longitude</Label>
+                  <Label htmlFor="longitude" className="text-muted-foreground text-sm">Longitude</Label>
                   <Input
                     id="longitude"
                     type="number"
-                    step="any"
+                    step="0.000001"
+                    min="-180"
+                    max="180"
                     value={formData.coordinates[1]}
-                    onChange={(e) =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        coordinates: [prev.coordinates[0], parseFloat(e.target.value) || 0],
-                      }))
-                    }
-                    placeholder="Enter longitude"
+                    onChange={(e) => handleCoordinateChange('lng', e.target.value)}
+                    placeholder="e.g., 75.1240"
+                    required
+                    className="font-mono"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Current: {formData.coordinates[1].toFixed(6)}°E
+                  </p>
                 </div>
               </div>
-              <div className="h-[300px] rounded-md border">
-                {typeof window !== 'undefined' && (
-                  <Map
-                    center={formData.coordinates}
-                    onLocationSelect={handleLocationSelect}
-                  />
-                )}
-              </div>
-              <p className="mt-2 text-sm text-muted-foreground flex items-center">
-                <MapPin className="w-4 h-4 mr-1" />
-                Selected: {formData.coordinates[0].toFixed(6)},{' '}
-                {formData.coordinates[1].toFixed(6)}
-              </p>
             </div>
           </div>
 

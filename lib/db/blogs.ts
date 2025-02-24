@@ -1,14 +1,7 @@
-import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DynamoDBDocumentClient, PutCommand, GetCommand, QueryCommand, DeleteCommand, UpdateCommand, ScanCommand } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb"
+import { DynamoDBDocumentClient, ScanCommand, UpdateCommand, PutCommand, GetCommand, QueryCommand, DeleteCommand, ScanCommandInput, QueryCommandInput } from "@aws-sdk/lib-dynamodb"
 
-const client = new DynamoDBClient({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  },
-})
-
+const client = new DynamoDBClient({})
 const docClient = DynamoDBDocumentClient.from(client)
 
 const TableName = 'OikosBlogs'
@@ -16,16 +9,21 @@ const TableName = 'OikosBlogs'
 export interface BlogPost {
   id: string
   title: string
-  slug: string
-  content: string
   excerpt: string
-  coverImage: string
+  content: string
   author: string
   tags: string[]
-  publishedAt: string | null
+  slug: string
+  coverImage?: string
   status: 'draft' | 'published'
+  publishedAt?: string | null
   createdAt: string
   updatedAt: string
+}
+
+interface BlogStats {
+  total: number
+  published: number
 }
 
 export interface PaginatedResult<T> {
@@ -88,14 +86,9 @@ export async function listBlogs(options?: {
   limit?: number
   nextToken?: string
 }): Promise<PaginatedResult<BlogPost>> {
-  let params: any = {
-    TableName,
-    Limit: options?.limit || 10, // Default to 10 items per page
-  }
-
   if (options?.status) {
-    params = {
-      ...params,
+    const params: QueryCommandInput = {
+      TableName,
       IndexName: 'status-index',
       KeyConditionExpression: '#status = :status',
       ExpressionAttributeNames: {
@@ -104,69 +97,98 @@ export async function listBlogs(options?: {
       ExpressionAttributeValues: {
         ':status': options.status,
       },
+      Limit: options?.limit || 10,
     }
+
+    if (options?.nextToken) {
+      params.ExclusiveStartKey = JSON.parse(decodeURIComponent(options.nextToken));
+    }
+
+    const result = await docClient.send(new QueryCommand(params));
+    
+    return {
+      items: result.Items as BlogPost[],
+      metadata: {
+        hasNextPage: !!result.LastEvaluatedKey,
+        nextToken: result.LastEvaluatedKey 
+          ? encodeURIComponent(JSON.stringify(result.LastEvaluatedKey))
+          : undefined,
+        total: result.Count || 0,
+      },
+    };
+  }
+
+  // If no status filter, use ScanCommand
+  const params: ScanCommandInput = {
+    TableName,
+    Limit: options?.limit || 10,
   }
 
   if (options?.nextToken) {
-    params.ExclusiveStartKey = JSON.parse(
-      Buffer.from(options.nextToken, 'base64').toString()
-    )
+    params.ExclusiveStartKey = JSON.parse(decodeURIComponent(options.nextToken));
   }
 
-  // Get total count
-  const countParams = { ...params }
-  delete countParams.Limit
-  delete countParams.ExclusiveStartKey
-  const countResult = await docClient.send(
-    options?.status ? new QueryCommand(countParams) : new ScanCommand(countParams)
-  )
-
-  // Get paginated results
-  const result = await docClient.send(
-    options?.status ? new QueryCommand(params) : new ScanCommand(params)
-  )
-
+  const result = await docClient.send(new ScanCommand(params));
+  
   return {
     items: result.Items as BlogPost[],
     metadata: {
       hasNextPage: !!result.LastEvaluatedKey,
-      nextToken: result.LastEvaluatedKey
-        ? Buffer.from(JSON.stringify(result.LastEvaluatedKey)).toString('base64')
+      nextToken: result.LastEvaluatedKey 
+        ? encodeURIComponent(JSON.stringify(result.LastEvaluatedKey))
         : undefined,
-      total: countResult.Count || 0,
+      total: result.Count || 0,
+    },
+  };
+}
+
+export async function getBlogStats(): Promise<BlogStats> {
+  try {
+    const command = new ScanCommand({
+      TableName: process.env.BLOGS_TABLE_NAME!,
+    })
+    const result = await docClient.send(command)
+    const items = result.Items as BlogPost[] || []
+
+    return {
+      total: items.length,
+      published: items.filter(item => item.status === 'published').length
     }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    throw new Error(`Failed to get blog stats: ${errorMessage}`)
   }
 }
 
-export async function updateBlog(
-  id: string,
-  updates: Partial<Omit<BlogPost, 'id' | 'createdAt' | 'updatedAt'>>
-) {
-  const updateExpressions: string[] = []
-  const expressionAttributeNames: Record<string, string> = {}
-  const expressionAttributeValues: Record<string, any> = {}
+export async function updateBlog(id: string, data: Partial<BlogPost>): Promise<void> {
+  try {
+    const updateExpression = Object.keys(data)
+      .map((key) => `#${key} = :${key}`)
+      .join(', ')
 
-  Object.entries(updates).forEach(([key, value]) => {
-    updateExpressions.push(`#${key} = :${key}`)
-    expressionAttributeNames[`#${key}`] = key
-    expressionAttributeValues[`:${key}`] = value
-  })
+    const expressionAttributeNames = Object.keys(data).reduce<Record<string, string>>((acc, key) => ({
+      ...acc,
+      [`#${key}`]: key
+    }), {})
 
-  // Always update the updatedAt timestamp
-  updateExpressions.push('#updatedAt = :updatedAt')
-  expressionAttributeNames['#updatedAt'] = 'updatedAt'
-  expressionAttributeValues[':updatedAt'] = new Date().toISOString()
+    const expressionAttributeValues = Object.entries(data).reduce<Record<string, unknown>>((acc, [key, value]) => ({
+      ...acc,
+      [`:${key}`]: value
+    }), {})
 
-  const result = await docClient.send(new UpdateCommand({
-    TableName,
-    Key: { id },
-    UpdateExpression: `SET ${updateExpressions.join(', ')}`,
-    ExpressionAttributeNames: expressionAttributeNames,
-    ExpressionAttributeValues: expressionAttributeValues,
-    ReturnValues: 'ALL_NEW',
-  }))
+    const command = new UpdateCommand({
+      TableName: process.env.BLOGS_TABLE_NAME!,
+      Key: { id },
+      UpdateExpression: `SET ${updateExpression}`,
+      ExpressionAttributeNames: expressionAttributeNames,
+      ExpressionAttributeValues: expressionAttributeValues
+    })
 
-  return result.Attributes as BlogPost
+    await docClient.send(command)
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    throw new Error(`Failed to update blog: ${errorMessage}`)
+  }
 }
 
 export async function deleteBlog(id: string) {

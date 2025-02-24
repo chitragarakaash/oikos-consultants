@@ -39,28 +39,18 @@ export default function ProjectsPage() {
   const [selectedSector, setSelectedSector] = useState('all')
   const [sortBy, setSortBy] = useState('recent')
   const [projects, setProjects] = useState<Project[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchProjects = async () => {
       try {
-        setLoading(true)
-        setError(null)
-        const response = await fetch('/api/projects')
-        if (!response.ok) {
-          throw new Error('Failed to fetch projects')
-        }
+        const response = await fetch('/api/projects?status=ongoing')
+        if (!response.ok) throw new Error('Failed to fetch projects')
         const data = await response.json()
-        setProjects(data)
+        setProjects(data.items)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred')
-        console.error('Error fetching projects:', err)
-      } finally {
-        setLoading(false)
+        // Handle error appropriately
       }
     }
-
     fetchProjects()
   }, [])
 

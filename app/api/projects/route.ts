@@ -14,6 +14,18 @@ const ddbClient = new DynamoDB({
 const ddbDocClient = DynamoDBDocument.from(ddbClient)
 const TableName = 'OikosProjects'
 
+interface ProjectData {
+  id?: string
+  title: string
+  client: string
+  status: string
+  sector: string
+  location: string
+  startYear: number
+  endYear?: number
+  coordinates: [number, number]
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -21,7 +33,7 @@ export async function GET(request: Request) {
     const sector = searchParams.get('sector')
     
     let filterExpression = ''
-    let expressionAttributeValues: Record<string, any> = {}
+    const expressionAttributeValues: Record<string, string | number> = {}
     
     if (status) {
       filterExpression = 'status = :status'
@@ -73,11 +85,12 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const project = await request.json()
+    const data: ProjectData = await request.json()
     const timestamp = new Date().toISOString()
+    const id = crypto.randomUUID()
 
     // Validate required fields
-    if (!project.title || !project.client || !project.coordinates || !project.status || !project.startYear) {
+    if (!data.title || !data.client || !data.coordinates || !data.status || !data.startYear) {
       return NextResponse.json(
         { error: 'Missing required fields: title, client, coordinates, status, startYear' },
         { status: 400 }
@@ -85,7 +98,7 @@ export async function POST(request: Request) {
     }
 
     // Validate status
-    if (!['completed', 'ongoing'].includes(project.status)) {
+    if (!['completed', 'ongoing'].includes(data.status)) {
       return NextResponse.json(
         { error: 'Status must be either "completed" or "ongoing"' },
         { status: 400 }
@@ -93,8 +106,8 @@ export async function POST(request: Request) {
     }
 
     // Validate coordinates
-    if (!Array.isArray(project.coordinates) || project.coordinates.length !== 2 ||
-        typeof project.coordinates[0] !== 'number' || typeof project.coordinates[1] !== 'number') {
+    if (!Array.isArray(data.coordinates) || data.coordinates.length !== 2 ||
+        typeof data.coordinates[0] !== 'number' || typeof data.coordinates[1] !== 'number') {
       return NextResponse.json(
         { error: 'Coordinates must be an array of two numbers [longitude, latitude]' },
         { status: 400 }
@@ -103,7 +116,7 @@ export async function POST(request: Request) {
 
     // Validate years
     const currentYear = new Date().getFullYear()
-    const startYear = parseInt(project.startYear)
+    const startYear = parseInt(data.startYear.toString())
     if (isNaN(startYear) || startYear < 2000 || startYear > currentYear + 5) {
       return NextResponse.json(
         { error: 'Start year must be between 2000 and ' + (currentYear + 5) },
@@ -111,15 +124,15 @@ export async function POST(request: Request) {
       )
     }
 
-    if (project.status === 'completed') {
-      if (!project.endYear) {
+    if (data.status === 'completed') {
+      if (!data.endYear) {
         return NextResponse.json(
           { error: 'End year is required for completed projects' },
           { status: 400 }
         )
       }
-      const endYear = parseInt(project.endYear)
-      if (isNaN(endYear) || endYear < startYear || endYear > currentYear) {
+      const endYear = data.endYear
+      if (endYear < startYear || endYear > currentYear) {
         return NextResponse.json(
           { error: 'End year must be between start year and current year' },
           { status: 400 }
@@ -127,35 +140,20 @@ export async function POST(request: Request) {
       }
     }
 
-    const Item: Project = {
-      id: `proj_${Date.now()}`,
-      title: project.title,
-      client: project.client,
-      status: project.status,
-      coordinates: project.coordinates,
-      description: project.description,
-      sector: project.sector,
-      startYear: project.startYear,
-      endYear: project.endYear,
-      duration: project.duration,
-      impact: project.impact,
-      images: project.images,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-    }
-
     await ddbDocClient.put({
       TableName,
-      Item,
+      Item: {
+        id,
+        ...data,
+        createdAt: timestamp,
+        updatedAt: timestamp
+      }
     })
 
-    return NextResponse.json(Item)
+    return NextResponse.json({ success: true })
   } catch (error) {
-    console.error('Error creating project:', error)
-    return NextResponse.json(
-      { error: 'Failed to create project' },
-      { status: 500 }
-    )
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
 

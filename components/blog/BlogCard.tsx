@@ -9,7 +9,7 @@ import { ArrowUpRight } from 'lucide-react'
 interface BlogCardProps {
   title: string
   excerpt: string
-  coverImage: string
+  coverImage?: string
   author: string
   publishedAt: string
   slug: string
@@ -37,7 +37,7 @@ export default function BlogCard({
           {/* Image */}
           <div className="relative h-48 w-full overflow-hidden">
             <Image
-              src={coverImage}
+              src={coverImage || '/images/default-blog-cover.jpg'}
               alt={title}
               fill
               className="object-cover transition-transform duration-500 group-hover:scale-110"

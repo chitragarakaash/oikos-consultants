@@ -1,11 +1,26 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo, FC } from 'react'
 import { MapContainer, TileLayer, Marker, useMap, useMapEvents } from 'react-leaflet'
 import type { LatLngExpression } from 'leaflet'
-import dynamic from 'next/dynamic'
 import 'leaflet/dist/leaflet.css'
 import L from 'leaflet'
+
+// Initialize Leaflet icons once outside the component
+const initializeLeaflet = () => {
+  // @ts-expect-error - Known issue with Leaflet types for icon URL methods
+  delete L.Icon.Default.prototype._getIconUrl
+  L.Icon.Default.mergeOptions({
+    iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+    iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+    shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
+  })
+}
+
+// Initialize once when the module loads
+if (typeof window !== 'undefined') {
+  initializeLeaflet()
+}
 
 interface MapProps {
   center: [number, number]
@@ -30,32 +45,16 @@ function ChangeView({ center }: { center: [number, number] }) {
   return null
 }
 
-export default function Map({ center, onLocationSelect }: MapProps) {
-  // Initialize Leaflet icons
-  useEffect(() => {
-    (async function init() {
-      // @ts-ignore - Known issue with Leaflet types
-      delete L.Icon.Default.prototype._getIconUrl
-      // @ts-ignore - Known issue with Leaflet types
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
-        iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
-        shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
-      })
-    })()
-  }, [])
-
-  const mapProps = {
+const Map: FC<MapProps> = ({ center, onLocationSelect }) => {
+  const mapProps = useMemo(() => ({
     center: center as LatLngExpression,
     zoom: 13,
     style: { height: '100%', width: '100%', zIndex: 1 } as const,
     scrollWheelZoom: false as const,
-  }
+  }), [center])
 
   return (
-    // @ts-ignore - Known issue with react-leaflet types
-    <MapContainer {...mapProps}>
-      {/* @ts-ignore - Known issue with react-leaflet types */}
+    <MapContainer key={`map-${center.join(',')}`} {...mapProps}>
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
@@ -64,4 +63,6 @@ export default function Map({ center, onLocationSelect }: MapProps) {
       <ChangeView center={center} />
     </MapContainer>
   )
-} 
+}
+
+export default Map 

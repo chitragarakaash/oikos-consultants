@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -21,7 +21,6 @@ import { Badge } from '@/components/ui/badge'
 import { Plus, Pencil, Trash2, MapPin } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import ProjectForm from './components/ProjectForm'
-import { useRouter } from 'next/navigation'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,34 +34,35 @@ import {
 import { Project } from '@/types/project'
 
 export default function AdminProjects() {
-  const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isFormOpen, setIsFormOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [showForm, setShowForm] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | undefined>()
-  const { toast } = useToast()
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [projectToDelete, setProjectToDelete] = useState<Project | undefined>()
+  const { toast } = useToast()
+
+  const fetchProjects = useCallback(async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/projects?status=ongoing')
+      if (!response.ok) throw new Error('Failed to fetch projects')
+      const data = await response.json()
+      setProjects(data.items)
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to fetch projects. Please try again.",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }, [toast])
 
   useEffect(() => {
     fetchProjects()
-  }, [])
-
-  const fetchProjects = async () => {
-    try {
-      const response = await fetch('/api/projects')
-      const data = await response.json()
-      setProjects(data)
-    } catch (error) {
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch projects',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  }, [fetchProjects])
 
   const handleDelete = async (id: string) => {
     try {
@@ -93,11 +93,11 @@ export default function AdminProjects() {
 
   const handleEdit = (project: Project) => {
     setSelectedProject(project)
-    setIsFormOpen(true)
+    setShowForm(true)
   }
 
   const handleCloseForm = () => {
-    setIsFormOpen(false)
+    setShowForm(false)
     setSelectedProject(undefined)
     fetchProjects() // Refresh the list after form closes
   }
@@ -113,7 +113,7 @@ export default function AdminProjects() {
         </div>
         <Button
           className="bg-[#2E7D32] hover:bg-[#1B5E20]"
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => setShowForm(true)}
         >
           <Plus className="mr-2 h-4 w-4" />
           Add Project
@@ -141,7 +141,7 @@ export default function AdminProjects() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {loading ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8">
                     <div className="flex items-center justify-center">
@@ -199,7 +199,7 @@ export default function AdminProjects() {
                           className="h-8 w-8 text-red-500 hover:text-red-600"
                           onClick={() => {
                             setProjectToDelete(project)
-                            setDeleteDialogOpen(true)
+                            setShowDeleteDialog(true)
                           }}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -216,11 +216,11 @@ export default function AdminProjects() {
 
       <ProjectForm
         project={selectedProject}
-        isOpen={isFormOpen}
+        isOpen={showForm}
         onClose={handleCloseForm}
       />
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
@@ -232,7 +232,7 @@ export default function AdminProjects() {
               onClick={() => {
                 if (projectToDelete?.id) {
                   handleDelete(projectToDelete.id)
-                  setDeleteDialogOpen(false)
+                  setShowDeleteDialog(false)
                 }
               }}
             >

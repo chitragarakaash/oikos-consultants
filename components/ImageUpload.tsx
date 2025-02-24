@@ -5,15 +5,16 @@ import { UploadButton } from '@uploadthing/react'
 import type { OurFileRouter } from '@/app/api/uploadthing/core'
 import Image from 'next/image'
 import { X, ImageIcon } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
 interface ImageUploadProps {
-  value: string
+  value?: string
   onChange: (url: string) => void
   onRemove: () => void
 }
 
 export default function ImageUpload({
-  value,
+  value = '',
   onChange,
   onRemove
 }: ImageUploadProps) {
@@ -56,27 +57,15 @@ export default function ImageUpload({
       </div>
 
       <div className="flex items-center justify-center">
-        <UploadButton<OurFileRouter, "blogImage">
-          endpoint="blogImage"
+        <UploadButton<OurFileRouter, "blogImageUploader">
+          endpoint="blogImageUploader"
           onClientUploadComplete={(res) => {
             if (res?.[0]) {
               onChange(res[0].url)
             }
           }}
           onUploadError={(error: Error) => {
-            console.error('Upload error:', error)
-            alert('Error uploading image')
-          }}
-          appearance={{
-            button: {
-              background: '#2E7D32',
-              color: 'white',
-              padding: '8px 16px',
-              borderRadius: '6px',
-            },
-            allowedContent: {
-              display: 'none',
-            },
+            toast.error(error.message || 'Upload failed')
           }}
         />
       </div>

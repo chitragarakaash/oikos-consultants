@@ -16,7 +16,6 @@ export default function BlogPageClient({ initialPosts, initialMetadata }: BlogPa
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedTag, setSelectedTag] = useState<string | null>(null)
   const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [allTags, setAllTags] = useState<string[]>(
     Array.from(new Set(initialPosts.flatMap(post => post.tags)))
@@ -28,7 +27,6 @@ export default function BlogPageClient({ initialPosts, initialMetadata }: BlogPa
 
   const fetchPosts = async (token?: string) => {
     try {
-      setIsLoading(true)
       const params = new URLSearchParams()
       params.append('status', 'published')
       if (token) params.append('nextToken', token)
@@ -47,10 +45,7 @@ export default function BlogPageClient({ initialPosts, initialMetadata }: BlogPa
       )) as string[]
       setAllTags(tags)
     } catch (err) {
-      console.error('Error fetching blog posts:', err)
       setError('Failed to load blog posts')
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -83,8 +78,6 @@ export default function BlogPageClient({ initialPosts, initialMetadata }: BlogPa
     
     return matchesSearch && matchesTag
   })
-
-  const totalPages = Math.ceil(totalPosts / 9)
 
   if (error) {
     return (
