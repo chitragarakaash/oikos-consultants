@@ -222,7 +222,6 @@ export default function Home() {
                   <h2 className="text-5xl font-bold text-[#1A1C1B] mb-4">
                     Our <span className="text-[#2E7D32]">Mission</span>
                   </h2>
-                  <div className="absolute -left-4 top-0 h-full w-1 bg-gradient-to-b from-[#2E7D32]/0 via-[#2E7D32] to-[#2E7D32]/0" />
                 </div>
                 <p className="text-xl text-[#2C302E] max-w-xl leading-relaxed">
                   Pioneering sustainable practices and innovative environmental solutions for a better tomorrow.

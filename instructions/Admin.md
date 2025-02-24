@@ -4,6 +4,8 @@
 
 This document outlines the implementation plan for the admin panel of the Oikos Consultants website. The admin panel will provide functionality for managing projects and blog content through a secure interface.
 
+**IMPORTANT: DO NOT CHANGE ANYTHING FROM THE CURRENT PROJECT PAGE. The admin panel implementation should not affect or modify the existing project page functionality.**
+
 ## Features to be Implemented
 
 1. **Project Management**

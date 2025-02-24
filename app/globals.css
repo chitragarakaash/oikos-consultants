@@ -113,3 +113,8 @@
 .animate-pulse-slow {
   animation: pulse 8s ease-in-out infinite;
 }
+
+/* Back to Top Button Inner Shadow */
+.shadow-inner-white {
+  box-shadow: inset 0 0 8px rgba(255, 255, 255, 0.2);
+}

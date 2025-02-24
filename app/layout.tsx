@@ -3,9 +3,9 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import BackToTop from "@/components/BackToTop";
 import { Toaster } from "@/components/ui/toaster";
 import AccessibilityProvider from "./components/AccessibilityProvider";
+import BackToTop from "@/components/BackToTop";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -77,7 +77,6 @@ export default function RootLayout({
       </head>
       <body className={inter.className}>
         <AccessibilityProvider>
-          <BackToTop />
           <div className="min-h-screen flex flex-col">
             <Navbar />
             <main id="main-content" className="flex-grow" tabIndex={-1}>
@@ -85,6 +84,7 @@ export default function RootLayout({
             </main>
             <Footer />
           </div>
+          <BackToTop />
           <Toaster />
         </AccessibilityProvider>
       </body>

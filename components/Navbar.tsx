@@ -4,7 +4,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useState, memo } from 'react'
 import { Menu, X, ChevronDown } from 'lucide-react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 
 const navLinks = [
   { href: '/', label: 'Home' },
@@ -23,6 +23,7 @@ const navLinks = [
     ]
   },
   { href: '/projects', label: 'Our Projects' },
+  { href: '/blog', label: 'Blogs' },
 ]
 
 const NavContent = memo(function NavContent({ 
@@ -43,7 +44,7 @@ const NavContent = memo(function NavContent({
       <div className="flex">
         <Link 
           href="/" 
-          className="flex-shrink-0 flex items-center relative group"
+          className="flex-shrink-0 flex items-center relative"
           aria-label="Home"
         >
           <div 
@@ -54,7 +55,6 @@ const NavContent = memo(function NavContent({
               transition: 'all 200ms cubic-bezier(0.4, 0, 0.2, 1)' 
             }}
           >
-            <div className="absolute inset-0 bg-green-500/10 rounded-lg scale-110 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             <Image
               src="/main-logo.png"
               alt="Oikos Consultants Logo"
@@ -62,7 +62,6 @@ const NavContent = memo(function NavContent({
               sizes="180px"
               priority
               style={{ objectFit: 'contain' }}
-              className="transition-transform duration-300 group-hover:scale-[1.02]"
             />
           </div>
         </Link>
@@ -77,11 +76,19 @@ const NavContent = memo(function NavContent({
           >
             <Link
               href={link.href}
-              className="text-[#2C302E] hover:text-[#2E7D32] font-medium transition-all duration-300 text-[15px] antialiased inline-flex items-center gap-1.5 relative group"
+              className={`
+                text-[#2C302E] hover:text-[#2E7D32] font-medium transition-all duration-300 
+                text-[15px] antialiased inline-flex items-center gap-1.5 relative group
+                ${activeDropdown === link.href ? 'text-[#2E7D32]' : ''}
+              `}
             >
               <span className="relative">
                 {link.label}
-                <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#2E7D32] transform origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+                <span className={`
+                  absolute left-1/2 right-1/2 bottom-0 h-0.5 bg-[#2E7D32] transform
+                  transition-all duration-300 rounded-full opacity-0
+                  ${activeDropdown === link.href ? 'left-0 right-0 opacity-100' : 'group-hover:left-0 group-hover:right-0 group-hover:opacity-100'}
+                `} />
               </span>
               {link.dropdown && (
                 <ChevronDown 
@@ -92,40 +99,58 @@ const NavContent = memo(function NavContent({
                 />
               )}
             </Link>
-            {link.dropdown && activeDropdown === link.href && (
-              <div 
-                className="absolute top-full left-1/2 -translate-x-1/2 pt-4 w-72 z-50"
-                role="menu"
-                aria-orientation="vertical"
-                aria-labelledby="menu-button"
-              >
-                <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-lg border border-[#2E7D32]/10 overflow-hidden">
-                  <div className="py-2">
-                    {link.dropdown.map((item, idx) => (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        className="flex items-center gap-3 px-5 py-2.5 text-[#2C302E] hover:text-[#2E7D32] hover:bg-[#2E7D32]/5 transition-all duration-200 text-[14px] group relative"
-                        role="menuitem"
-                      >
-                        <motion.div
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ duration: 0.2, delay: idx * 0.05 }}
-                          className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]/40 group-hover:bg-[#2E7D32] transition-colors duration-200"
-                        />
-                        <motion.span
-                          initial={{ x: -10, opacity: 0 }}
-                          animate={{ x: 0, opacity: 1 }}
-                          transition={{ duration: 0.3, delay: idx * 0.05 }}
-                        >
-                          {item.label}
-                        </motion.span>
-                      </Link>
-                    ))}
+            {link.dropdown && (
+              <AnimatePresence>
+                {activeDropdown === link.href && (
+                  <div 
+                    className="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 w-64 z-50"
+                    role="menu"
+                    aria-orientation="vertical"
+                    aria-labelledby="menu-button"
+                  >
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2, ease: "easeOut" }}
+                      className="bg-white rounded-xl shadow-lg border border-neutral-100 overflow-hidden"
+                    >
+                      <div className="py-1">
+                        {link.dropdown.map((item, idx) => (
+                          <motion.div
+                            key={item.href}
+                            initial={{ opacity: 0, x: -10 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ 
+                              duration: 0.2,
+                              delay: idx * 0.05,
+                              ease: "easeOut"
+                            }}
+                          >
+                            <Link
+                              href={item.href}
+                              className="flex items-center gap-3 px-4 py-2.5 text-[#2C302E] hover:text-[#2E7D32] hover:bg-[#2E7D32]/5 transition-all duration-200 text-[14px] group"
+                              role="menuitem"
+                            >
+                              <div className="w-1 h-1 rounded-full bg-neutral-300 group-hover:bg-[#2E7D32] transition-colors duration-200" />
+                              <span className="transform-gpu transition-transform duration-200 group-hover:translate-x-0.5">
+                                {item.label}
+                              </span>
+                            </Link>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.2 }}
+                      className="absolute -top-[6px] left-1/2 -translate-x-1/2 w-3 h-3 bg-white rotate-45 border-t border-l border-neutral-100"
+                    />
                   </div>
-                </div>
-              </div>
+                )}
+              </AnimatePresence>
             )}
           </div>
         ))}
@@ -163,7 +188,7 @@ const MobileMenu = memo(function MobileMenu({
   return (
     <div 
       className={`
-        md:hidden fixed inset-x-0 top-[72px] bg-white/95 backdrop-blur-lg
+        md:hidden fixed inset-x-0 top-[72px] bg-white
         transition-all duration-500 ease-in-out border-b border-neutral-200
         ${isMenuOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'}
       `}
@@ -183,7 +208,9 @@ const MobileMenu = memo(function MobileMenu({
                 >
                   <span className="relative">
                     {link.label}
-                    <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#2E7D32] transform origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+                    <span className="absolute left-1/2 right-1/2 bottom-0 h-0.5 bg-[#2E7D32] transform
+                      transition-all duration-300 rounded-full opacity-0
+                      group-hover:left-0 group-hover:right-0 group-hover:opacity-100" />
                   </span>
                   <ChevronDown 
                     size={16} 
@@ -214,9 +241,11 @@ const MobileMenu = memo(function MobileMenu({
                           className="block text-[#2C302E] hover:text-[#2E7D32] py-2 transition-colors text-sm group relative"
                           onClick={() => setIsMenuOpen(false)}
                         >
-                          <span className="relative">
+                          <span className="relative inline-flex items-center">
                             {item.label}
-                            <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#2E7D32] transform origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+                            <span className="absolute left-1/2 right-1/2 bottom-0 h-0.5 bg-[#2E7D32] transform
+                              transition-all duration-300 rounded-full opacity-0
+                              group-hover:left-0 group-hover:right-0 group-hover:opacity-100" />
                           </span>
                         </Link>
                       </motion.div>
@@ -230,9 +259,11 @@ const MobileMenu = memo(function MobileMenu({
                 className="block text-[#2C302E] hover:text-[#2E7D32] font-medium py-2 transition-all duration-300 group relative"
                 onClick={() => setIsMenuOpen(false)}
               >
-                <span className="relative">
+                <span className="relative inline-flex items-center">
                   {link.label}
-                  <span className="absolute left-0 right-0 bottom-0 h-0.5 bg-[#2E7D32] transform origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100" />
+                  <span className="absolute left-1/2 right-1/2 bottom-0 h-0.5 bg-[#2E7D32] transform
+                    transition-all duration-300 rounded-full opacity-0
+                    group-hover:left-0 group-hover:right-0 group-hover:opacity-100" />
                 </span>
               </Link>
             )}
@@ -288,32 +319,19 @@ export default function Navbar() {
     <div className="fixed top-0 left-0 right-0 z-50 flex justify-center">
       <div 
         style={{
-          width: '100%',
-          maxWidth: mounted && scrollProgress > 0 ? '900px' : '100%',
-          borderRadius: mounted ? `${scrollProgress * 9999}px` : '0px',
-          transform: mounted ? `scale(${1 - (scrollProgress * 0.05)})` : 'scale(1)',
+          width: '94%',
+          maxWidth: '1200px',
+          borderRadius: '32px',
+          transform: mounted ? `scale(${1 - (scrollProgress * 0.03)})` : 'scale(1)',
           opacity: 1,
-          transition: 'all 700ms cubic-bezier(0.4, 0, 0.2, 1)',
-          border: mounted && scrollProgress > 0 ? '1px solid rgba(255, 255, 255, 0.15)' : 'none',
-          background: mounted && scrollProgress > 0 ? 
-            'linear-gradient(to right, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.95))' : 
-            'rgba(255,255,255,0.9)',
-          backdropFilter: 'blur(8px) saturate(180%)',
-          WebkitBackdropFilter: 'blur(8px) saturate(180%)',
-          boxShadow: mounted && scrollProgress > 0 ? 
-            '0 4px 30px rgba(0, 0, 0, 0.1), inset 0 0 0 1px rgba(255, 255, 255, 0.1)' : 
-            '0 4px 30px rgba(0, 0, 0, 0.1)'
+          transition: 'all 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+          background: '#ffffff',
+          boxShadow: '0 4px 30px rgba(0, 0, 0, 0.1)',
+          marginTop: '1rem'
         }}
-        className={`
-          w-full transform-gpu antialiased
-          transition-[transform,opacity] duration-700 ease-in-out
-          ${mounted && scrollProgress > 0 ? 'mx-0 mt-4' : 'mx-0'}
-        `}
+        className="w-full transform-gpu antialiased"
       >
-        <div className={`
-          px-12 mx-auto
-          transition-all duration-700 ease-in-out
-        `}>
+        <div className="px-6 mx-auto">
           <div className="h-[72px] flex items-center justify-between max-w-[1400px] mx-auto">
             <NavContent 
               mounted={mounted}
