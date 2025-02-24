@@ -4,7 +4,7 @@
 
 This document outlines the implementation plan for the admin panel of the Oikos Consultants website. The admin panel will provide functionality for managing projects and blog content through a secure interface.
 
-**IMPORTANT: DO NOT CHANGE ANYTHING FROM THE CURRENT PROJECT PAGE. The admin panel implementation should not affect or modify the existing project page functionality.**
+**IMPORTANT: DO NOT CHANGE ANYTHING FROM THE CURRENT PROJECT & BLOGS PAGE. The admin panel implementation should not affect or modify the existing project page functionality.**
 
 ## Features to be Implemented
 
@@ -28,22 +28,36 @@ This document outlines the implementation plan for the admin panel of the Oikos 
 ## Tech Stack Additions
 
 ### Core Technologies
-- **Authentication**: Clerk
+- **Authentication**: NextAuth.js
 - **Database**: Amazon DynamoDB
 - **File Storage**: Amazon S3
 - **API Integration**: AWS SDK
+- **UI Components**: Shadcn UI
 
 ### Required Packages
 ```json
 {
   "dependencies": {
-    "@clerk/nextjs": "latest",
+    "next-auth": "latest",
+    "bcryptjs": "latest",
     "aws-sdk": "latest",
     "@aws-sdk/client-dynamodb": "latest",
     "@aws-sdk/lib-dynamodb": "latest",
     "react-markdown": "latest",
     "date-fns": "latest",
-    "uploadthing": "latest"
+    "uploadthing": "latest",
+    "@radix-ui/react-label": "latest",
+    "@radix-ui/react-slot": "latest",
+    "class-variance-authority": "latest",
+    "clsx": "latest",
+    "tailwind-merge": "latest",
+    "lucide-react": "latest"
+  },
+  "devDependencies": {
+    "tailwindcss": "latest",
+    "postcss": "latest",
+    "autoprefixer": "latest",
+    "@types/bcryptjs": "latest"
   }
 }
 ```
@@ -53,15 +67,56 @@ This document outlines the implementation plan for the admin panel of the Oikos 
 ```text
 app/
 ├── admin/
-│   ├── page.tsx           # Admin dashboard
-│   ├── projects/          # Project management
-│   └── blogs/            # Blog management
+│   ├── layout.tsx        # Admin-specific layout
+│   ├── components/       # Admin-specific components
+│   │   ├── AdminNav.tsx  # Admin navigation bar
+│   │   └── AdminFooter.tsx # Admin footer
+│   ├── page.tsx         # Admin dashboard
+│   ├── projects/        # Project management
+│   └── blogs/          # Blog management
 ├── auth/
-│   └── sign-in/          # Clerk signin page
-└── api/                  # API routes
-    ├── projects/         # Project CRUD endpoints
-    └── blogs/           # Blog CRUD endpoints
+│   └── sign-in/
+│       ├── page.tsx     # Sign-in page with Shadcn UI
+│       └── components/  # Sign-in components
+├── api/
+│   ├── auth/
+│   │   └── [...nextauth]/
+│   │       └── route.ts # NextAuth configuration
+│   ├── projects/       # Project CRUD endpoints
+│   └── blogs/         # Blog CRUD endpoints
+├── lib/
+│   └── auth.ts        # NextAuth utilities and types
+└── components/
+    └── ui/           # Shadcn UI components
 ```
+
+## Admin Layout Specifications
+
+### Admin Layout Features
+- **Dedicated Layout**: Separate layout wrapper for all admin pages
+- **Custom Navigation**: Admin-specific navigation with quick access to all management features
+- **Secure Wrapper**: Authentication check built into the layout
+- **Consistent Styling**: Admin-specific theme and styling
+
+### Admin Navigation Bar
+- Dashboard overview link
+- Project management section
+- Blog management section
+- Quick actions menu
+- Admin user profile/settings
+- Logout button
+
+### Admin Footer
+- Quick links to documentation
+- Support contact information
+- Version information
+- Environment indicator (development/production)
+
+### Admin Theme
+- Distinct color scheme from main website
+- Clear visual hierarchy
+- Responsive design for all screen sizes
+- Optimized for productivity and quick access
 
 ## Data Structures
 
@@ -104,9 +159,13 @@ app/
 ## Required Environment Variables
 
 ```env
-# Clerk Authentication
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
+# NextAuth Configuration
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your-secret-key
+
+# Admin User Credentials (for initial setup)
+ADMIN_EMAIL=
+ADMIN_PASSWORD=
 
 # AWS Configuration
 AWS_ACCESS_KEY_ID=
@@ -132,10 +191,12 @@ UPLOADTHING_APP_ID=
 ## Implementation Steps
 
 1. **Authentication Setup**
-   - Configure Clerk
-   - Implement protected routes
-   - Add login button to footer
-   - Create sign-in page
+   - Install and configure NextAuth.js
+   - Create sign-in page with Shadcn UI components
+   - Set up protected API routes
+   - Implement session management
+   - Add authentication middleware
+   - Create secure password hashing with bcryptjs
 
 2. **Database Setup**
    - Create DynamoDB tables

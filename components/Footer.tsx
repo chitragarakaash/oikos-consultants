@@ -95,7 +95,8 @@ export default function Footer() {
                   { label: 'About Us', path: '/about' },
                   { label: 'Contact Us', path: '/contact' },
                   { label: 'Projects', path: '/projects' },
-                  { label: 'Blog', path: '/blog' }
+                  { label: 'Blogs', path: '/blog' },
+                  { label: 'Admin Sign In', path: '/auth/sign-in' }
                 ].map((link) => (
                   <li key={link.label}>
                     <Link 

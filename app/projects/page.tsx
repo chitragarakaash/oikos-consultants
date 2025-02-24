@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import ProjectCard from '@/components/ProjectCard'
 import { CheckCircle2, Clock, MapPin, Building2, Search } from 'lucide-react'
 import IndiaMap from '@/components/ClientIndiaMap'
@@ -14,280 +15,173 @@ import {
 } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useState } from 'react'
 import Script from 'next/script'
 
 interface Project {
+  id: string
   title: string
   client: string
-  coordinates: [number, number] // Tuple type for [longitude, latitude]
-  sector?: string
+  status: 'completed' | 'ongoing'
   description?: string
+  coordinates: [number, number]
+  sector?: string
+  startDate?: string
+  completionDate?: string
   duration?: string
   impact?: string[]
-}
-
-// Project data with coordinates and enhanced information
-const completedProjects: Project[] = [
-  {
-    title: "Socio-economic and agro-biodiversity mapping as part of conservation mapping exercise of Little Rann of Kachchh landscape in Gujarat",
-    client: "Gujarat Ecological Education Research (GEER) Foundation, Gandhinagar, Gujarat",
-    coordinates: [70.57, 23.31],
-    sector: "Biodiversity Conservation",
-    description: "Comprehensive mapping of socio-economic factors and agricultural biodiversity in the unique landscape of Little Rann of Kachchh.",
-    duration: "12 months",
-    impact: ["Mapped 500+ species", "Covered 5000 sq km area", "Benefited 50+ local communities"]
-  },
-  {
-    title: "Mid-term assessment of crown cover, grass cover and tree regeneration in Gujarat Forest Development Project Area",
-    client: "Gujarat Forestry Research Foundation, Gandhinagar, Gujarat",
-    coordinates: [72.68, 23.23], // Gandhinagar
-  },
-  {
-    title: "Assessment of biomass production, wood use and carbon sequestration in Prosopis juliflora shrublands in Bhavnagar and Bharuch Districts, Gujarat",
-    client: "Gujarat Forestry Research Foundation, Gandhinagar, Gujarat",
-    coordinates: [72.15, 21.71], // Bharuch
-  },
-  {
-    title: "Study on change in wood use pattern in Rural Gujarat",
-    client: "Gujarat Forestry Research Foundation, Gandhinagar, Gujarat",
-    coordinates: [72.68, 23.23], // Gandhinagar
-  },
-  {
-    title: "Survey of Standing Stock in GFDP Intervention Areas at Ex Ante Period",
-    client: "Gujarat Forestry Research Foundation, Gandhinagar, Gujarat",
-    coordinates: [72.68, 23.23], // Gandhinagar
-  },
-  {
-    title: "Assessment of Elephant movement along the proposed Govindpur - Sahebganj highway in Jharkhand to suggest appropriate mitigation measures",
-    client: "Road Construction Department, Ranchi, Jharkhand and Department of Forest, Environment & Climate Change, Government of Jharkhand",
-    coordinates: [85.33, 23.35], // Ranchi
-  },
-  {
-    title: "Biodiversity assessment and conservation plan for proposed Iron Ore mining area at Halmuri Hill Range at Dhanurajanpur Tehsil, Kanker District, Chattisgarh",
-    client: "Ind Synergy Pvt. Ltd., Chattisgarh",
-    coordinates: [81.49, 20.27], // Kanker
-  },
-  {
-    title: "Regional Environment Impact Assessment (EIA) study & preparation of Environment Management Plan (EMP) for Dholera Special Investment Region (DSIR): Socio-Economic Baseline",
-    client: "Gujarat Infrastructure Development Board (GIDB), Gandhinagar, Gujarat",
-    coordinates: [72.19, 22.24], // Dholera
-  },
-  {
-    title: "Assessment of carbon sequestration & charcoal conversion in Prosopis juliflora shrublands in Kachchh District (Gujarat)",
-    client: "Gujarat Forestry Research Foundation, Gandhinagar, Gujarat",
-    coordinates: [70.57, 23.31], // Kachchh
-  },
-  {
-    title: "Construction of proposed Jetties of EBTL in Salaya Creek: Assessment of social, economical and livelihood aspects of local fishing communities",
-    client: "Essar Bulk Terminal (Salaya) Limited, Ahmedabad, Gujarat",
-    coordinates: [69.60, 22.31], // Salaya
-  },
-  {
-    title: "Assessment of impacts of proposed 400kV D/C power transmission lines by PGCIL on the biodiversity of Wild Ass Sanctuary",
-    client: "Power Grid Corporation of India Limited, Vadodara, Gujarat",
-    coordinates: [72.93, 22.30], // Vadodara
-  },
-  {
-    title: "Assessment of impact of salt pan of Kanoria Chemicals Ltd. on biodiversity values of Wild Ass Sanctuary",
-    client: "Kanoria Chemicals and Industries Limited, Gujarat",
-    coordinates: [71.57, 23.31], // Wild Ass Sanctuary
-  },
-  {
-    title: 'Formulation of "Site-specific wildlife conservation and management plan for Schedule-1 Species" for Devadari Iron Ore Mines of KIOCL',
-    client: "KIOCL Limited, Sandur, Karnataka",
-    coordinates: [76.54, 15.08], // Sandur
-  },
-  {
-    title: "Formulation of Site-specific wildlife conservation and management plan for Schedule-1 Species under Wildlife (Protection) Act for 6 MTPA integrated steel plant and captive power plant of UGFL",
-    client: "Uttam Galva Ferrous Ltd. (UGFL), Mumbai",
-    coordinates: [72.88, 19.08], // Mumbai
-  },
-  {
-    title: "Biodiversity survey of Makardhokra - 1 Opencast Coal mine (Phase-1)",
-    client: "Western Coalfields Ltd., Nagpur, Maharashtra",
-    coordinates: [79.08, 21.15], // Nagpur
-  },
-  {
-    title: 'Formulation of "Site-specific wildlife conservation and management plan for Schedule-1 Species" for Steel and Power Plant',
-    client: "Minera Steel & Power Private Limited, Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-  },
-  {
-    title: 'Formulation of "Site-specific wildlife conservation and management plan for Schedule-1 Species" for Metal and Ferro Alloy Plant of SMIORE',
-    client: "The Sandur Manganese & Iron Ores (SMIORE) Limited, Vijayunagara, Karnataka",
-    coordinates: [76.54, 15.08], // Sandur/Vijayunagara
-  },
-];
-
-const ongoingProjects: Project[] = [
-  {
-    title: 'Formulation of "Site-specific wildlife conservation and management plan for Schedule-1 Species" for power transmission line',
-    client: "Resources Pellets Concentrates Pvt. Ltd., Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-    sector: "Wildlife Conservation",
-    description: "Development of comprehensive wildlife conservation plan for power transmission infrastructure"
-  },
-  {
-    title: 'Formulation of "Soil moisture conservation plan" for power transmission line',
-    client: "Resources Pellets Concentrates Pvt. Ltd., Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-    sector: "Environmental Conservation",
-    description: "Soil conservation planning for power transmission infrastructure"
-  },
-  {
-    title: 'Formulation of "Site-specific wildlife conservation and management plan for Schedule-1 Species" for water pipeline',
-    client: "Resources Pellets Concentrates Pvt. Ltd., Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-    sector: "Wildlife Conservation",
-    description: "Wildlife conservation planning for water pipeline infrastructure"
-  },
-  {
-    title: 'Formulation of "Soil moisture conservation plan" for water pipeline',
-    client: "Resources Pellets Concentrates Pvt. Ltd., Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-    sector: "Environmental Conservation",
-    description: "Soil conservation planning for water pipeline infrastructure"
-  },
-  {
-    title: 'Formulation of "Site-specific wildlife conservation and management plan for Schedule-1 Species" for downhill pipe conveyor of BKG mines',
-    client: "BKG Mining Pvt. Ltd., Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-    sector: "Wildlife Conservation",
-    description: "Wildlife conservation planning for mining infrastructure"
-  },
-  {
-    title: 'Formulation of "Soil moisture conservation plan" for downhill pipe conveyor of BKG mines',
-    client: "BKG Mining Pvt. Ltd., Ballari, Karnataka",
-    coordinates: [76.92, 15.14], // Ballari
-    sector: "Environmental Conservation",
-    description: "Soil conservation planning for mining infrastructure"
-  },
-];
-
-// Get unique sectors from projects
-const sectors = Array.from(new Set([
-  ...completedProjects.map(p => p.sector),
-  ...ongoingProjects.map(p => p.sector)
-].filter(Boolean)));
-
-// Convert projects to map format
-const projectLocations = [
-  ...completedProjects.map(p => ({ ...p, isOngoing: false })),
-  ...ongoingProjects.map(p => ({ ...p, isOngoing: true }))
-];
-
-// Add Schema.org JSON-LD
-const jsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'Oikos Consultants',
-  url: 'https://oikosconsultants.com',
-  logo: 'https://oikosconsultants.com/images/logo.png',
-  description: 'Leading environmental consulting firm specializing in biodiversity conservation and ecological services across India.',
-  location: {
-    '@type': 'Place',
-    address: {
-      '@type': 'PostalAddress',
-      addressCountry: 'IN'
-    }
-  },
-  hasOfferCatalog: {
-    '@type': 'OfferCatalog',
-    name: 'Environmental Projects Portfolio',
-    itemListElement: [
-      ...completedProjects.map((project, index) => ({
-        '@type': 'Project',
-        name: project.title,
-        description: project.description || 'Environmental consulting project by Oikos Consultants',
-        provider: {
-          '@type': 'Organization',
-          name: 'Oikos Consultants'
-        },
-        client: {
-          '@type': 'Organization',
-          name: project.client
-        },
-        location: {
-          '@type': 'Place',
-          geo: {
-            '@type': 'GeoCoordinates',
-            latitude: project.coordinates[1],
-            longitude: project.coordinates[0]
-          }
-        },
-        status: 'Completed',
-        position: index + 1
-      })),
-      ...ongoingProjects.map((project, index) => ({
-        '@type': 'Project',
-        name: project.title,
-        description: project.description || 'Environmental consulting project by Oikos Consultants',
-        provider: {
-          '@type': 'Organization',
-          name: 'Oikos Consultants'
-        },
-        client: {
-          '@type': 'Organization',
-          name: project.client
-        },
-        location: {
-          '@type': 'Place',
-          geo: {
-            '@type': 'GeoCoordinates',
-            latitude: project.coordinates[1],
-            longitude: project.coordinates[0]
-          }
-        },
-        status: 'In Progress',
-        position: completedProjects.length + index + 1
-      }))
-    ]
-  }
+  images?: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 export default function ProjectsPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedSector, setSelectedSector] = useState('all')
   const [sortBy, setSortBy] = useState('recent')
+  const [projects, setProjects] = useState<Project[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const response = await fetch('/api/projects')
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects')
+        }
+        const data = await response.json()
+        setProjects(data)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'An error occurred')
+        console.error('Error fetching projects:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchProjects()
+  }, [])
 
   // Filter and sort projects
-  const filteredCompletedProjects = completedProjects
-    .filter(project => {
-      const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          project.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          project.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          project.sector?.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchesSector = selectedSector === 'all' || project.sector === selectedSector
-      
-      return matchesSearch && matchesSector
-    })
-    .sort((a, b) => {
-      if (sortBy === 'alphabetical') {
-        return a.title.localeCompare(b.title)
-      }
-      // For 'recent', we'll keep the original order as it's assumed to be chronological
-      return 0
-    })
+  const filteredProjects = projects.filter(project => {
+    const matchesSearch = 
+      project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      project.sector?.toLowerCase().includes(searchQuery.toLowerCase())
+    
+    const matchesSector = selectedSector === 'all' || project.sector === selectedSector
+    
+    return matchesSearch && matchesSector
+  })
 
-  const filteredOngoingProjects = ongoingProjects
-    .filter(project => {
-      const matchesSearch = project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          project.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          project.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                          project.sector?.toLowerCase().includes(searchQuery.toLowerCase())
-      
-      const matchesSector = selectedSector === 'all' || project.sector === selectedSector
-      
-      return matchesSearch && matchesSector
-    })
-    .sort((a, b) => {
+  // Separate completed and ongoing projects
+  const completedProjects = filteredProjects.filter(p => p.status === 'completed')
+  const ongoingProjects = filteredProjects.filter(p => p.status === 'ongoing')
+
+  // Sort projects based on selected sort option
+  const sortProjects = (projects: Project[]) => {
+    return [...projects].sort((a, b) => {
       if (sortBy === 'alphabetical') {
         return a.title.localeCompare(b.title)
       }
+      // For completed projects, sort by completion date
+      if (a.status === 'completed' && b.status === 'completed') {
+        return new Date(b.completionDate || '').getTime() - new Date(a.completionDate || '').getTime()
+      }
+      // For ongoing projects, sort by start date
+      if (a.status === 'ongoing' && b.status === 'ongoing') {
+        return new Date(b.startDate || '').getTime() - new Date(a.startDate || '').getTime()
+      }
       return 0
     })
+  }
+
+  const sortedCompletedProjects = sortProjects(completedProjects)
+  const sortedOngoingProjects = sortProjects(ongoingProjects)
+
+  // Get unique sectors from projects
+  const sectors = Array.from(new Set(projects
+    .map(p => p.sector)
+    .filter(Boolean) as string[]
+  ))
+
+  // Convert projects to map format
+  const projectLocations = [
+    ...completedProjects.map(p => ({ ...p, isOngoing: false })),
+    ...ongoingProjects.map(p => ({ ...p, isOngoing: true }))
+  ]
+
+  // Add Schema.org JSON-LD
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Oikos Consultants',
+    url: 'https://oikosconsultants.com',
+    logo: 'https://oikosconsultants.com/images/logo.png',
+    description: 'Leading environmental consulting firm specializing in biodiversity conservation and ecological services across India.',
+    location: {
+      '@type': 'Place',
+      address: {
+        '@type': 'PostalAddress',
+        addressCountry: 'IN'
+      }
+    },
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: 'Environmental Projects Portfolio',
+      itemListElement: [
+        ...completedProjects.map((project, index) => ({
+          '@type': 'Project',
+          name: project.title,
+          description: project.description || 'Environmental consulting project by Oikos Consultants',
+          provider: {
+            '@type': 'Organization',
+            name: 'Oikos Consultants'
+          },
+          client: {
+            '@type': 'Organization',
+            name: project.client
+          },
+          location: {
+            '@type': 'Place',
+            geo: {
+              '@type': 'GeoCoordinates',
+              latitude: project.coordinates[1],
+              longitude: project.coordinates[0]
+            }
+          },
+          status: 'Completed',
+          position: index + 1
+        })),
+        ...ongoingProjects.map((project, index) => ({
+          '@type': 'Project',
+          name: project.title,
+          description: project.description || 'Environmental consulting project by Oikos Consultants',
+          provider: {
+            '@type': 'Organization',
+            name: 'Oikos Consultants'
+          },
+          client: {
+            '@type': 'Organization',
+            name: project.client
+          },
+          location: {
+            '@type': 'Place',
+            geo: {
+              '@type': 'GeoCoordinates',
+              latitude: project.coordinates[1],
+              longitude: project.coordinates[0]
+            }
+          },
+          status: 'In Progress',
+          position: completedProjects.length + index + 1
+        }))
+      ]
+    }
+  }
 
   return (
     <>
@@ -481,7 +375,7 @@ export default function ProjectsPage() {
               {/* Results Summary */}
               <div className="text-center mb-8">
                 <p className="text-sm text-gray-600">
-                  Showing {filteredCompletedProjects.length + filteredOngoingProjects.length} projects
+                  Showing {sortedCompletedProjects.length + sortedOngoingProjects.length} projects
                   {searchQuery && ` matching "${searchQuery}"`}
                   {selectedSector !== 'all' && ` in ${selectedSector}`}
                 </p>
@@ -502,13 +396,13 @@ export default function ProjectsPage() {
                       </div>
                     </div>
                     <Badge variant="secondary" className="text-base px-3 py-1">
-                      {filteredCompletedProjects.length}
+                      {sortedCompletedProjects.length}
                     </Badge>
                   </div>
                   <ScrollArea className="h-[600px] pr-4">
-                    {filteredCompletedProjects.length > 0 ? (
+                    {sortedCompletedProjects.length > 0 ? (
                       <div className="space-y-4">
-                        {filteredCompletedProjects.map((project, index) => (
+                        {sortedCompletedProjects.map((project, index) => (
                           <div 
                             key={index} 
                             className="transform hover:-translate-y-1 transition-all duration-300"
@@ -542,13 +436,13 @@ export default function ProjectsPage() {
                       </div>
                     </div>
                     <Badge variant="secondary" className="text-base px-3 py-1">
-                      {filteredOngoingProjects.length}
+                      {sortedOngoingProjects.length}
                     </Badge>
                   </div>
                   <ScrollArea className="h-[600px] pr-4">
-                    {filteredOngoingProjects.length > 0 ? (
+                    {sortedOngoingProjects.length > 0 ? (
                       <div className="space-y-4">
-                        {filteredOngoingProjects.map((project, index) => (
+                        {sortedOngoingProjects.map((project, index) => (
                           <div 
                             key={index} 
                             className="transform hover:-translate-y-1 transition-all duration-300"

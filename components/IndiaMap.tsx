@@ -221,11 +221,12 @@ function IndiaBorder() {
         // Add border and state labels
         L.geoJSON(data, {
           style: {
-            color: '#475569',
-            weight: 1.5,
+            color: '#2E7D32', // Green color to match theme
+            weight: 4,
             fillOpacity: 0.05,
             fillColor: '#f1f5f9',
-            opacity: 0.8,
+            opacity: 1,
+            dashArray: '8, 8', // Larger dash pattern
           },
           onEachFeature: (feature, layer) => {
             if (feature.properties && feature.properties.name) {
@@ -347,7 +348,7 @@ export default function IndiaMap({ projectLocations }: IndiaMapProps) {
     <div className="relative w-full h-[700px] bg-white">
       {/* Scroll Overlay */}
       <div 
-        className={`absolute inset-0 flex items-center justify-center z-[2000] pointer-events-none transition-opacity duration-300 ${
+        className={`absolute top-8 left-8 z-[2000] pointer-events-none transition-opacity duration-300 ${
           showOverlay ? 'opacity-100' : 'opacity-0'
         }`}
       >
@@ -359,8 +360,8 @@ export default function IndiaMap({ projectLocations }: IndiaMapProps) {
       </div>
 
       <MapContainer
-        center={[23.5937, 78.9629]}
-        zoom={4.5}
+        center={[20.5937, 78.9629]}
+        zoom={5}
         style={{ height: '100%', width: '100%', position: 'relative', zIndex: 1 }}
         scrollWheelZoom={false}
         zoomControl={false}
@@ -372,8 +373,8 @@ export default function IndiaMap({ projectLocations }: IndiaMapProps) {
         minZoom={4}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_nolabels/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
         />
         <ZoomControl position="bottomright" />
         <IndiaBorder />

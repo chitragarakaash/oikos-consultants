@@ -1,12 +1,12 @@
-import { Metadata } from 'next'
+import type { Metadata } from "next";
 
-const metadata: Metadata = {
-  title: 'Oikos Consultants | Leading Environmental Consulting & Sustainability Solutions in India',
-  description: 'Oikos Consultants provides expert environmental consulting services, specializing in biodiversity conservation, BRSR compliance, sustainability solutions, and ecological assessments across India.',
-  keywords: 'environmental consulting, sustainability solutions, biodiversity conservation, BRSR compliance, ecological assessment, environmental consultants India, sustainability consulting, environmental impact assessment',
-  authors: [{ name: 'Oikos Consultants' }],
-  creator: 'Oikos Consultants',
-  publisher: 'Oikos Consultants',
+export const metadata: Metadata = {
+  title: "Oikos Consultants - Environmental Consulting & Sustainability Solutions",
+  description: "Leading environmental consulting firm specializing in BRSR compliance, sustainability solutions, biodiversity conservation, and ecological services across India.",
+  keywords: "environmental consulting, sustainability, BRSR compliance, biodiversity conservation, ecological services, GHG inventory, wildlife conservation",
+  authors: [{ name: "Akash Chitragar", url: "mailto:akash@webart4u.com" }],
+  creator: "Oikos Consultants",
+  publisher: "Oikos Consultants",
   formatDetection: {
     email: false,
     address: false,
@@ -17,28 +17,26 @@ const metadata: Metadata = {
     canonical: '/',
   },
   openGraph: {
-    title: 'Oikos Consultants - Environmental & Sustainability Solutions',
-    description: 'Leading environmental consulting firm in India offering comprehensive sustainability solutions, biodiversity conservation, and BRSR compliance services.',
+    title: 'Oikos Consultants - Environmental Consulting & Sustainability Solutions',
+    description: 'Leading environmental consulting firm specializing in BRSR compliance, sustainability solutions, biodiversity conservation, and ecological services across India.',
     url: 'https://oikosconsultants.com',
     siteName: 'Oikos Consultants',
     images: [
       {
-        url: '/images/og-home.jpg',
+        url: '/images/og-image.jpg',
         width: 1200,
         height: 630,
-        alt: 'Oikos Consultants - Environmental & Sustainability Solutions',
+        alt: 'Oikos Consultants - Environmental Solutions',
       },
     ],
-    locale: 'en_IN',
+    locale: 'en_US',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Oikos Consultants - Environmental & Sustainability Experts',
-    description: 'Expert environmental consulting services for sustainable development and ecological conservation across India.',
-    images: ['/images/twitter-home.jpg'],
-    creator: '@OikosConsult',
-    site: '@OikosConsult',
+    title: 'Oikos Consultants - Environmental Consulting & Sustainability Solutions',
+    description: 'Leading environmental consulting firm specializing in BRSR compliance, sustainability solutions, and ecological services.',
+    images: ['/images/twitter-image.jpg'],
   },
   robots: {
     index: true,
@@ -52,8 +50,6 @@ const metadata: Metadata = {
     },
   },
   verification: {
-    google: 'your-google-site-verification-code',
+    google: 'your-google-verification-code',
   },
-}
-
-export default metadata 
+}; 
