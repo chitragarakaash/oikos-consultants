@@ -32,8 +32,8 @@ export async function GET() {
   try {
     // Get recent activity from both projects and blog posts
     const [projects, posts] = await Promise.all([
-      safeTableScan('Projects'),
-      safeTableScan('BlogPosts')
+      safeTableScan(process.env.PROJECTS_TABLE_NAME || 'OikosProjects'),
+      safeTableScan(process.env.BLOGS_TABLE_NAME || 'OikosBlogs')
     ])
 
     // Combine and format activities

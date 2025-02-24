@@ -12,7 +12,7 @@ const ddbClient = new DynamoDB({
 })
 
 const ddbDocClient = DynamoDBDocument.from(ddbClient)
-const TableName = 'OikosProjects'
+const TableName = process.env.PROJECTS_TABLE_NAME || 'OikosProjects'
 
 interface ProjectData {
   id?: string

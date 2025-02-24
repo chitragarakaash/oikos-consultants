@@ -16,7 +16,7 @@ export async function GET() {
   try {
     // Get all projects
     const result = await ddb.scan({
-      TableName: 'Projects'
+      TableName: process.env.PROJECTS_TABLE_NAME || 'OikosProjects'
     })
 
     const total = result.Items?.length || 0
