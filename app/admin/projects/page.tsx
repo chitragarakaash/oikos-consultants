@@ -19,31 +19,30 @@ import {
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Plus, Pencil, Trash2, MapPin } from 'lucide-react'
-import { format } from 'date-fns'
 import { useToast } from '@/components/ui/use-toast'
 import ProjectForm from './components/ProjectForm'
-
-interface Project {
-  id: string
-  title: string
-  client: string
-  status: 'ongoing' | 'completed'
-  description: string
-  coordinates: [number, number]
-  sector: string
-  startDate: string
-  completionDate?: string
-  images: string[]
-  createdAt: string
-  updatedAt: string
-}
+import { useRouter } from 'next/navigation'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { Project } from '@/types/project'
 
 export default function AdminProjects() {
+  const router = useRouter()
   const [projects, setProjects] = useState<Project[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [selectedProject, setSelectedProject] = useState<Project | undefined>()
   const { toast } = useToast()
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [projectToDelete, setProjectToDelete] = useState<Project | undefined>()
 
   useEffect(() => {
     fetchProjects()
@@ -66,8 +65,6 @@ export default function AdminProjects() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this project?')) return
-
     try {
       const response = await fetch('/api/projects', {
         method: 'DELETE',
@@ -102,6 +99,7 @@ export default function AdminProjects() {
   const handleCloseForm = () => {
     setIsFormOpen(false)
     setSelectedProject(undefined)
+    fetchProjects() // Refresh the list after form closes
   }
 
   return (
@@ -138,7 +136,7 @@ export default function AdminProjects() {
                 <TableHead>Status</TableHead>
                 <TableHead>Sector</TableHead>
                 <TableHead>Location</TableHead>
-                <TableHead>Start Date</TableHead>
+                <TableHead>Start Year</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -184,9 +182,7 @@ export default function AdminProjects() {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {format(new Date(project.startDate), 'MMM d, yyyy')}
-                    </TableCell>
+                    <TableCell>{project.startYear}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Button
@@ -201,7 +197,10 @@ export default function AdminProjects() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8 text-red-500 hover:text-red-600"
-                          onClick={() => handleDelete(project.id)}
+                          onClick={() => {
+                            setProjectToDelete(project)
+                            setDeleteDialogOpen(true)
+                          }}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -220,6 +219,28 @@ export default function AdminProjects() {
         isOpen={isFormOpen}
         onClose={handleCloseForm}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this project?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (projectToDelete?.id) {
+                  handleDelete(projectToDelete.id)
+                  setDeleteDialogOpen(false)
+                }
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 

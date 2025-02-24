@@ -1,23 +1,7 @@
 import { NextResponse } from 'next/server'
 import { DynamoDB } from '@aws-sdk/client-dynamodb'
 import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
-
-interface Project {
-  id: string
-  title: string
-  client: string
-  status: 'completed' | 'ongoing'
-  description?: string
-  coordinates: [number, number]
-  sector?: string
-  startYear: string
-  endYear?: string
-  duration?: string
-  impact?: string[]
-  images?: string[]
-  createdAt: string
-  updatedAt: string
-}
+import { Project } from '@/types/project'
 
 const ddbClient = new DynamoDB({
   region: process.env.AWS_REGION,
@@ -67,11 +51,11 @@ export async function GET(request: Request) {
     const sortedProjects = projects.sort((a, b) => {
       // For completed projects, sort by completion date
       if (a.status === 'completed' && b.status === 'completed') {
-        return new Date(b.endYear || '').getTime() - new Date(a.endYear || '').getTime()
+        return parseInt(b.endYear || '0') - parseInt(a.endYear || '0')
       }
       // For ongoing projects, sort by start date
       if (a.status === 'ongoing' && b.status === 'ongoing') {
-        return new Date(b.startYear || '').getTime() - new Date(a.startYear || '').getTime()
+        return parseInt(b.startYear) - parseInt(a.startYear)
       }
       // Mixed status, completed projects come first
       return a.status === 'completed' ? -1 : 1

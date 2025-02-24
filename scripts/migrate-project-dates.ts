@@ -3,6 +3,7 @@ import { DynamoDBDocument } from '@aws-sdk/lib-dynamodb'
 import fs from 'fs'
 import path from 'path'
 import dotenv from 'dotenv'
+import { Project } from '../types/project'
 
 // Load environment variables from .env file
 dotenv.config()

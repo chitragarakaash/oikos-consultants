@@ -31,6 +31,7 @@ import { Calendar as CalendarIcon, MapPin } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useToast } from '@/components/ui/use-toast'
 import dynamic from 'next/dynamic'
+import { Project } from '@/types/project'
 
 // Dynamically import the map component to avoid SSR issues
 const Map = dynamic(() => import('./Map'), { ssr: false })
@@ -39,19 +40,6 @@ interface ProjectFormProps {
   project?: Project
   isOpen: boolean
   onClose: () => void
-}
-
-interface Project {
-  id?: string
-  title: string
-  client: string
-  status: 'ongoing' | 'completed'
-  description: string
-  coordinates: [number, number]
-  sector: string
-  startYear: string
-  endYear?: string
-  images: string[]
 }
 
 const sectors = [
