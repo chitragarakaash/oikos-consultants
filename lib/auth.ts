@@ -7,8 +7,8 @@ interface User {
 export function signIn(email: string, password: string): Promise<User | null> {
   return new Promise((resolve) => {
     // In a real app, these would be environment variables
-    const ADMIN_EMAIL = 'info@oikosconsultants.com';
-    const ADMIN_PASSWORD = 'admin123'; // Change this to a secure password
+    const ADMIN_EMAIL = 'seema.mali';
+    const ADMIN_PASSWORD = 'access.admin@123';
 
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       const user = {

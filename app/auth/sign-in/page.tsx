@@ -10,12 +10,12 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { motion } from "framer-motion";
-import { Lock, Mail, ArrowLeft } from "lucide-react";
+import { Settings, User, ArrowLeft } from "lucide-react";
 import { signIn } from "@/lib/auth";
 
 export default function SignIn() {
   const router = useRouter();
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function SignIn() {
     setError("");
 
     try {
-      const user = await signIn(email, password);
+      const user = await signIn(username, password);
       if (user) {
         router.push("/admin");
       } else {
@@ -71,7 +71,12 @@ export default function SignIn() {
           <CardHeader className="space-y-3">
             <div className="flex items-center justify-between">
               <CardTitle className="text-2xl">Admin Sign In</CardTitle>
-              <Lock className="w-5 h-5 text-[#2E7D32]" />
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              >
+                <Settings className="w-5 h-5 text-[#2E7D32]" />
+              </motion.div>
             </div>
             <CardDescription className="text-neutral-600">
               Sign in to access the admin dashboard
@@ -91,15 +96,15 @@ export default function SignIn() {
                 </motion.div>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-neutral-800">Email</Label>
+                <Label htmlFor="username" className="text-neutral-800">Username</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#2E7D32]" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#2E7D32]" />
                   <Input
-                    id="email"
-                    type="email"
-                    placeholder="admin@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    id="username"
+                    type="text"
+                    placeholder="Enter your username"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
                     className="pl-10 bg-white/80 border-[#E8F5E9] focus:border-[#2E7D32] transition-colors"
                     required
                   />
@@ -108,7 +113,7 @@ export default function SignIn() {
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-neutral-800">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#2E7D32]" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[#2E7D32]" />
                   <Input
                     id="password"
                     type="password"
