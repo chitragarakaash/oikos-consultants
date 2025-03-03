@@ -24,6 +24,7 @@ interface ProjectData {
   startYear: number
   endYear?: number
   coordinates: [number, number]
+  description?: string
 }
 
 export async function GET(request: Request) {
@@ -145,6 +146,7 @@ export async function POST(request: Request) {
       Item: {
         id,
         ...data,
+        description: data.description || '',
         createdAt: timestamp,
         updatedAt: timestamp
       }
@@ -234,7 +236,7 @@ export async function PUT(request: Request) {
         ':title': project.title,
         ':client': project.client,
         ':status': project.status,
-        ':description': project.description,
+        ':description': project.description || '',
         ':coordinates': project.coordinates,
         ':sector': project.sector,
         ':startYear': project.startYear,

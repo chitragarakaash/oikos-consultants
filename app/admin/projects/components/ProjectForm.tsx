@@ -259,7 +259,7 @@ export default function ProjectForm({ project, isOpen, onClose }: ProjectFormPro
 
             {/* Description */}
             <div className="col-span-2">
-              <Label htmlFor="description">Description *</Label>
+              <Label htmlFor="description">Description</Label>
               <Textarea
                 id="description"
                 value={formData.description}
@@ -267,7 +267,6 @@ export default function ProjectForm({ project, isOpen, onClose }: ProjectFormPro
                   setFormData((prev) => ({ ...prev, description: e.target.value }))
                 }
                 className="h-32"
-                required
               />
             </div>
 

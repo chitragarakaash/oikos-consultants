@@ -3,7 +3,7 @@ export interface Project {
   title: string
   client: string
   status: 'ongoing' | 'completed'
-  description: string
+  description?: string
   coordinates: [number, number]
   sector: string
   startYear: string
