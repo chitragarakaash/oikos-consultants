@@ -20,9 +20,8 @@ interface ProjectData {
   client: string
   status: string
   sector: string
-  location: string
-  startYear: number
-  endYear?: number
+  startYear: string
+  endYear?: string
   coordinates: [number, number]
   description?: string
 }
@@ -117,7 +116,7 @@ export async function POST(request: Request) {
 
     // Validate years
     const currentYear = new Date().getFullYear()
-    const startYear = parseInt(data.startYear.toString())
+    const startYear = parseInt(data.startYear)
     if (isNaN(startYear) || startYear < 2000 || startYear > currentYear + 5) {
       return NextResponse.json(
         { error: 'Start year must be between 2000 and ' + (currentYear + 5) },
@@ -132,7 +131,7 @@ export async function POST(request: Request) {
           { status: 400 }
         )
       }
-      const endYear = data.endYear
+      const endYear = parseInt(data.endYear)
       if (endYear < startYear || endYear > currentYear) {
         return NextResponse.json(
           { error: 'End year must be between start year and current year' },
@@ -154,6 +153,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ success: true })
   } catch (error) {
+    console.error('Error creating project:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
     return NextResponse.json({ error: errorMessage }, { status: 500 })
   }

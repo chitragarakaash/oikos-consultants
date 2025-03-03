@@ -85,7 +85,10 @@ export default function ProjectForm({ project, isOpen, onClose }: ProjectFormPro
         body: JSON.stringify(formData),
       })
 
-      if (!response.ok) throw new Error('Failed to save project')
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save project');
+      }
 
       toast({
         title: 'Success',
@@ -95,9 +98,10 @@ export default function ProjectForm({ project, isOpen, onClose }: ProjectFormPro
       router.refresh()
       onClose()
     } catch (error) {
+      console.error('Form submission error:', error);
       toast({
         title: 'Error',
-        description: `Failed to ${project ? 'update' : 'create'} project`,
+        description: error instanceof Error ? error.message : `Failed to ${project ? 'update' : 'create'} project`,
         variant: 'destructive',
       })
     } finally {
