@@ -31,6 +31,7 @@ export default function AdminDashboard() {
   })
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [errors, setErrors] = useState<{stats?: string, activity?: string}>({})
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -39,6 +40,10 @@ export default function AdminDashboard() {
           fetch('/api/projects/stats'),
           fetch('/api/blogs/stats')
         ])
+        
+        if (!projectsRes.ok || !postsRes.ok) {
+          throw new Error(`Failed to fetch stats: Projects (${projectsRes.status}), Blogs (${postsRes.status})`)
+        }
         
         const projectsData = await projectsRes.json()
         const postsData = await postsRes.json()
@@ -51,16 +56,23 @@ export default function AdminDashboard() {
         })
       } catch (error) {
         console.error('Error fetching stats:', error)
+        setErrors(prev => ({...prev, stats: error instanceof Error ? error.message : 'Failed to fetch stats'}))
       }
     }
 
     const fetchActivity = async () => {
       try {
         const res = await fetch('/api/activity')
+        
+        if (!res.ok) {
+          throw new Error(`Failed to fetch activity: (${res.status})`)
+        }
+        
         const data = await res.json()
         setRecentActivity(data)
       } catch (error) {
         console.error('Error fetching activity:', error)
+        setErrors(prev => ({...prev, activity: error instanceof Error ? error.message : 'Failed to fetch activity'}))
       } finally {
         setIsLoading(false)
       }
@@ -98,6 +110,16 @@ export default function AdminDashboard() {
 
       {/* Stats Overview */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {errors.stats && (
+          <div className="md:col-span-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="flex items-center">
+              <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+              <p className="text-red-700 font-medium">Error loading stats: {errors.stats}</p>
+            </div>
+            <p className="mt-1 text-sm text-red-600">Please check your network connection or try again later.</p>
+          </div>
+        )}
+        
         <Card className="relative overflow-hidden">
           <div className="absolute top-0 right-0 w-24 h-24 transform translate-x-8 -translate-y-8 bg-[#E8F5E9] rounded-full" />
           <CardHeader>
@@ -219,6 +241,15 @@ export default function AdminDashboard() {
                 {isLoading ? (
                   <div className="flex items-center justify-center h-full">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-[#2E7D32] border-r-2"></div>
+                  </div>
+                ) : errors.activity ? (
+                  <div className="flex flex-col items-center justify-center h-[300px] text-center">
+                    <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+                    <p className="text-red-700 font-medium">Error loading activity</p>
+                    <p className="text-sm text-red-600 mt-1">{errors.activity}</p>
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Please check your network connection or try again later.
+                    </p>
                   </div>
                 ) : recentActivity.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-[300px] text-center">

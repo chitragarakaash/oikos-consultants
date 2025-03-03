@@ -16,7 +16,7 @@ export async function GET() {
   try {
     // Get all blog posts
     const result = await ddb.scan({
-      TableName: 'BlogPosts'
+      TableName: process.env.BLOGS_TABLE_NAME || 'BlogPosts'
     })
 
     const total = result.Items?.length || 0
